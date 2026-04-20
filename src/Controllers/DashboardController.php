@@ -29,7 +29,7 @@ final class DashboardController
             'totalCount' => $this->history->totalCount(),
             'successCount' => $this->history->successCount(),
             'failureCount' => $this->history->failureCount(),
-            'endpoint' => ClientFactory::endpoint(),
+            'endpoint' => ClientFactory::effectiveEndpoint(),
             'application' => ClientFactory::application(),
             'environment' => ClientFactory::environment(),
         ]);

@@ -111,6 +111,26 @@ a:hover { color: var(--accent-hover); }
 
 .sidebar-spacer { flex: 1; }
 
+/* Auth icon — small status dot in the top-right corner. */
+.sidebar-btn-auth-session,
+.sidebar-btn-auth-\.env,
+.sidebar-btn-auth-none { position: relative; }
+.sidebar-btn-auth-session::after,
+.sidebar-btn-auth-\.env::after,
+.sidebar-btn-auth-none::after {
+    content: "";
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: 2px solid var(--bg-sidebar);
+}
+.sidebar-btn-auth-session::after { background: var(--success-color); }
+.sidebar-btn-auth-\.env::after    { background: var(--accent-primary); }
+.sidebar-btn-auth-none::after     { background: var(--error-color); }
+
 .content-area {
     flex: 1;
     display: flex;

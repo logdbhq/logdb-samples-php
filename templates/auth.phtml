@@ -1,0 +1,78 @@
+<?php
+/**
+ * @var string      $currentSource    'session' | '.env' | 'none'
+ * @var string|null $currentMasked
+ * @var string      $currentEndpoint
+ * @var \Sample\View $view
+ */
+?>
+<div class="page-header">
+    <h1>Sign in</h1>
+    <div class="subtitle">
+        Set the LogDB API key the sample will use for this browser session.
+        Overrides the key in <code>.env</code>. Cleared when you sign out (or
+        close the browser, depending on your session cookie lifetime).
+    </div>
+</div>
+
+<div class="page-body">
+
+    <section class="dashboard-section">
+        <h2>Current session</h2>
+        <dl class="kv-list">
+            <dt>Source</dt>
+            <dd>
+                <?php if ($currentSource === 'session'): ?>
+                    <span class="level-badge success">session</span>
+                <?php elseif ($currentSource === '.env'): ?>
+                    <span class="level-badge info">.env</span>
+                <?php else: ?>
+                    <span class="level-badge error">none</span>
+                <?php endif; ?>
+            </dd>
+            <dt>Active key</dt>
+            <dd><?= $currentMasked === null ? '<span class="muted">— not set —</span>' : $view->e($currentMasked) ?></dd>
+            <dt>Endpoint</dt>
+            <dd><?= $view->e($currentEndpoint) ?></dd>
+        </dl>
+
+        <?php if ($currentSource === 'session'): ?>
+            <form method="post" action="/auth/signout" style="margin-top: 12px">
+                <button type="submit" class="btn btn-default">Sign out</button>
+            </form>
+        <?php endif; ?>
+    </section>
+
+    <section class="dashboard-section">
+        <h2><?= $currentSource === 'session' ? 'Replace session credentials' : 'Sign in with a new key' ?></h2>
+        <form method="post" action="/auth">
+            <div class="form-grid single">
+                <div class="form-field">
+                    <label for="api_key">LogDB API key</label>
+                    <input type="text" id="api_key" name="api_key" class="form-input"
+                           placeholder="pk_… or sk_…" autocomplete="off" required>
+                    <span class="hint">
+                        From the LogDB dashboard. Stored in PHP's session file —
+                        readable by anyone with shell access to this machine.
+                        Local-dev only; don't deploy this sample.
+                    </span>
+                </div>
+                <div class="form-field">
+                    <label for="endpoint">Endpoint override (optional)</label>
+                    <input type="text" id="endpoint" name="endpoint" class="form-input"
+                           placeholder="https://otlp.logdb.site"
+                           value="<?= $view->e($currentSource === 'session' ? $currentEndpoint : '') ?>">
+                    <span class="hint">
+                        Falls back to <code>LOGDB_ENDPOINT</code> from <code>.env</code>
+                        (currently <code><?= $view->e($currentEndpoint) ?></code>) if blank.
+                    </span>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Save</button>
+                <a href="/" class="btn btn-default">Cancel</a>
+            </div>
+        </form>
+    </section>
+
+</div>

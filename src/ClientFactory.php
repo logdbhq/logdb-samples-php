@@ -8,39 +8,39 @@ use LogDB\LogDBClient;
 use LogDB\Options\LogDBClientOptions;
 
 /**
- * Builds a single `LogDBClient` for the request.
+ * Builds a `LogDBClient` for the current request, with **per-session**
+ * authentication.
  *
- * Wires `onError` into the shared `HistoryStore` so the Status screen can
- * surface SDK failures. Reads everything from `.env` via the `Env` helper.
+ * Resolution order for both `apiKey` and `endpoint`:
+ *   1. `$_SESSION['logdb_api_key']` / `$_SESSION['logdb_endpoint']` — set by the /auth screen
+ *   2. `.env` (`LOGDB_API_KEY` / `LOGDB_ENDPOINT`)
+ *   3. (endpoint only) the hard-coded default `https://otlp.logdb.site`
+ *
+ * Sessions are per-browser-cookie. Two browsers hitting the same dev server
+ * can use two different LogDB API keys side-by-side, and signing out of one
+ * doesn't affect the other.
+ *
+ * The client is rebuilt per request — the constructor is cheap (no I/O), and
+ * we want a different client whenever the session key changes.
  */
 final class ClientFactory
 {
-    private static ?LogDBClient $client = null;
+    public const SOURCE_SESSION = 'session';
+    public const SOURCE_ENV = '.env';
+    public const SOURCE_NONE = 'none';
 
     public static function make(HistoryStore $history): LogDBClient
     {
-        if (self::$client !== null) {
-            return self::$client;
+        $apiKey = self::effectiveApiKey();
+        if ($apiKey === null) {
+            throw new MissingApiKey('No LogDB API key found in session or .env. Sign in at /auth.');
         }
 
-        $endpoint = Env::get('LOGDB_ENDPOINT', 'https://otlp.logdb.site') ?? 'https://otlp.logdb.site';
-        $apiKey = Env::get('LOGDB_API_KEY');
-        $application = Env::get('LOGDB_APPLICATION', 'logdb-php-sample');
-        $environment = Env::get('LOGDB_ENVIRONMENT', 'development');
-
-        if ($apiKey === null || $apiKey === '' || $apiKey === 'your-api-key-here') {
-            throw new \RuntimeException(
-                'LOGDB_API_KEY is not set. Copy .env.example to .env and fill in your LogDB API key.',
-            );
-        }
-
-        self::$client = new LogDBClient(new LogDBClientOptions(
-            endpoint: $endpoint,
+        return new LogDBClient(new LogDBClientOptions(
+            endpoint: self::effectiveEndpoint(),
             apiKey: $apiKey,
-            defaultApplication: $application,
-            defaultEnvironment: $environment,
-            // Default-ish: batching on, shutdown handler drains at PHP-FPM request end.
-            // The sample's web requests are short-lived enqueue → return → flush at shutdown.
+            defaultApplication: self::application(),
+            defaultEnvironment: self::environment(),
             enableBatching: true,
             batchSize: 50,
             flushInterval: 2_000,
@@ -53,14 +53,55 @@ final class ClientFactory
                 );
             },
         ));
-
-        return self::$client;
     }
 
-    /** Sample doesn't authenticate — expose the configured endpoint for the Status screen. */
-    public static function endpoint(): string
+    public static function effectiveApiKey(): ?string
     {
+        $s = $_SESSION['logdb_api_key'] ?? null;
+        if (is_string($s) && $s !== '') {
+            return $s;
+        }
+        $e = Env::get('LOGDB_API_KEY');
+        if ($e !== null && $e !== '' && $e !== 'your-api-key-here') {
+            return $e;
+        }
+        return null;
+    }
+
+    public static function effectiveEndpoint(): string
+    {
+        $s = $_SESSION['logdb_endpoint'] ?? null;
+        if (is_string($s) && $s !== '') {
+            return $s;
+        }
         return Env::get('LOGDB_ENDPOINT', 'https://otlp.logdb.site') ?? 'https://otlp.logdb.site';
+    }
+
+    public static function keySource(): string
+    {
+        if (isset($_SESSION['logdb_api_key']) && is_string($_SESSION['logdb_api_key']) && $_SESSION['logdb_api_key'] !== '') {
+            return self::SOURCE_SESSION;
+        }
+        $e = Env::get('LOGDB_API_KEY');
+        if ($e !== null && $e !== '' && $e !== 'your-api-key-here') {
+            return self::SOURCE_ENV;
+        }
+        return self::SOURCE_NONE;
+    }
+
+    /** Mask all but the last 4 chars: `pk_…3c4b502` style. */
+    public static function maskKey(string $key): string
+    {
+        $tail = substr($key, -4);
+        $prefix = strtok($key, '_');
+        return ($prefix !== false && $prefix !== $key ? "{$prefix}_…" : '…') . $tail;
+    }
+
+    /** Convenience wrapper used by the Status screen and sidebar header. */
+    public static function maskedActiveKey(): ?string
+    {
+        $k = self::effectiveApiKey();
+        return $k === null ? null : self::maskKey($k);
     }
 
     public static function application(): string
@@ -71,5 +112,21 @@ final class ClientFactory
     public static function environment(): string
     {
         return Env::get('LOGDB_ENVIRONMENT', 'development') ?? 'development';
+    }
+
+    /** Replace the session API key + (optional) endpoint. */
+    public static function signIn(string $apiKey, ?string $endpoint = null): void
+    {
+        $_SESSION['logdb_api_key'] = $apiKey;
+        if ($endpoint !== null && $endpoint !== '') {
+            $_SESSION['logdb_endpoint'] = $endpoint;
+        } else {
+            unset($_SESSION['logdb_endpoint']);
+        }
+    }
+
+    public static function signOut(): void
+    {
+        unset($_SESSION['logdb_api_key'], $_SESSION['logdb_endpoint']);
     }
 }

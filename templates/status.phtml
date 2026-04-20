@@ -1,14 +1,16 @@
 <?php
 /**
- * @var string $endpoint
- * @var string $application
- * @var string $environment
- * @var int    $totalCount
- * @var int    $successCount
- * @var int    $failureCount
- * @var array  $recentErrors
- * @var string $phpVersion
- * @var string $sdkVersion
+ * @var string      $endpoint
+ * @var string      $application
+ * @var string      $environment
+ * @var string      $keySource    'session' | '.env' | 'none'
+ * @var string|null $maskedKey
+ * @var int         $totalCount
+ * @var int         $successCount
+ * @var int         $failureCount
+ * @var array       $recentErrors
+ * @var string      $phpVersion
+ * @var string      $sdkVersion
  * @var \Sample\View $view
  */
 ?>
@@ -25,6 +27,19 @@
     <section class="dashboard-section">
         <h2>Configuration</h2>
         <dl class="kv-list">
+            <dt>API key source</dt>     <dd>
+                <?php if ($keySource === 'session'): ?>
+                    <span class="level-badge success">session</span>
+                <?php elseif ($keySource === '.env'): ?>
+                    <span class="level-badge info">.env</span>
+                <?php else: ?>
+                    <span class="level-badge error">none</span>
+                <?php endif; ?>
+                <?php if ($maskedKey !== null): ?>
+                    <span class="muted" style="margin-left: 8px"><?= $view->e($maskedKey) ?></span>
+                <?php endif; ?>
+                — <a href="/auth">manage</a>
+            </dd>
             <dt>Endpoint</dt>           <dd><?= $view->e($endpoint) ?></dd>
             <dt>Application</dt>        <dd><?= $view->e($application) ?></dd>
             <dt>Environment</dt>        <dd><?= $view->e($environment) ?></dd>

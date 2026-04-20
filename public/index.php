@@ -17,6 +17,7 @@ $root = dirname(__DIR__);
 require $root . '/vendor/autoload.php';
 
 use Sample\ClientFactory;
+use Sample\Controllers\AuthController;
 use Sample\Controllers\BeatController;
 use Sample\Controllers\CacheController;
 use Sample\Controllers\DashboardController;
@@ -25,6 +26,7 @@ use Sample\Controllers\StatusController;
 use Sample\Controllers\StressController;
 use Sample\Env;
 use Sample\HistoryStore;
+use Sample\MissingApiKey;
 use Sample\View;
 
 Env::load($root . '/.env');
@@ -54,8 +56,29 @@ if ($history === null) {
 $flash = $_SESSION['flash'] ?? null;
 unset($_SESSION['flash']);
 
+// /auth and /auth/signout run BEFORE we try to construct the client — they
+// don't need one (signing in is what gives us a key in the first place).
+if ($path === '/auth' && $method === 'GET') {
+    echo (new AuthController($history, $view))->form($flash);
+    return;
+}
+if ($path === '/auth' && $method === 'POST') {
+    echo (new AuthController($history, $view))->submit($_POST);
+    return;
+}
+if ($path === '/auth/signout' && $method === 'POST') {
+    echo (new AuthController($history, $view))->signOut();
+    return;
+}
+
 try {
     $client = ClientFactory::make($history);
+} catch (MissingApiKey) {
+    // No key in session, no key in .env — send the user to the sign-in form
+    // instead of erroring with a 500.
+    $_SESSION['flash'] = ['type' => 'info', 'message' => 'Sign in with a LogDB API key to start sending.'];
+    header('Location: /auth');
+    return;
 } catch (\Throwable $e) {
     http_response_code(500);
     echo $view->render('error', [
