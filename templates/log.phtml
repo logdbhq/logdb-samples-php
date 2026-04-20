@@ -1,0 +1,107 @@
+<?php
+/**
+ * @var list<array{value: string, label: string}> $levels
+ * @var \Sample\View $view
+ */
+?>
+<div class="page-header">
+    <h1>Send a log</h1>
+    <div class="subtitle">
+        Builds a <code>Log</code> entry via <code>LogEventBuilder</code> and ships it on submit.
+    </div>
+</div>
+
+<div class="page-body">
+    <form method="post" action="/log" class="dashboard-section">
+        <h2>Required</h2>
+        <div class="form-grid">
+            <div class="form-field" style="grid-column: 1 / -1">
+                <label for="message">Message</label>
+                <input type="text" id="message" name="message" class="form-input"
+                       placeholder="user logged in" required>
+            </div>
+
+            <div class="form-field">
+                <label for="level">Level</label>
+                <select id="level" name="level" class="form-select">
+                    <?php foreach ($levels as $opt): ?>
+                        <option value="<?= $view->e($opt['value']) ?>"
+                            <?= $opt['value'] === 'Info' ? 'selected' : '' ?>>
+                            <?= $view->e($opt['label']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <div class="form-field">
+                <label for="user_email">User email</label>
+                <input type="email" id="user_email" name="user_email" class="form-input"
+                       placeholder="alice@example.com">
+            </div>
+        </div>
+
+        <h2 style="margin-top: 24px">Request context (optional)</h2>
+        <div class="form-grid">
+            <div class="form-field">
+                <label for="correlation_id">Correlation ID</label>
+                <input type="text" id="correlation_id" name="correlation_id" class="form-input"
+                       placeholder="trace-abc-123">
+            </div>
+            <div class="form-field">
+                <label for="request_path">Request path</label>
+                <input type="text" id="request_path" name="request_path" class="form-input"
+                       placeholder="/api/checkout">
+            </div>
+            <div class="form-field">
+                <label for="http_method">HTTP method</label>
+                <input type="text" id="http_method" name="http_method" class="form-input"
+                       placeholder="POST">
+            </div>
+            <div class="form-field">
+                <label for="status_code">Status code</label>
+                <input type="number" id="status_code" name="status_code" class="form-input"
+                       placeholder="200" min="100" max="599">
+            </div>
+            <div class="form-field">
+                <label for="ip_address">IP address</label>
+                <input type="text" id="ip_address" name="ip_address" class="form-input"
+                       placeholder="203.0.113.42">
+            </div>
+        </div>
+
+        <h2 style="margin-top: 24px">Labels (free-form tags)</h2>
+        <div class="kv-rows" data-list="labels">
+            <input type="text" name="labels[]" class="form-input" placeholder="payment">
+            <input type="text" name="labels[]" class="form-input" placeholder="checkout">
+        </div>
+
+        <h2 style="margin-top: 24px">Typed attributes</h2>
+        <p class="muted" style="margin-top:0; font-size:12px">
+            <strong>Routing rule:</strong> <code>true</code>/<code>false</code> → <code>attributesB</code>;
+            integers/floats → <code>attributesN</code>; everything else → <code>attributesS</code>.
+        </p>
+        <div class="kv-rows" data-list="attributes" id="attributes-rows">
+            <div class="kv-row">
+                <input type="text" name="attributes_keys[]"  class="form-input" placeholder="currency">
+                <input type="text" name="attributes_values[]" class="form-input" placeholder="EUR">
+                <button type="button" class="btn-icon" data-remove>×</button>
+            </div>
+            <div class="kv-row">
+                <input type="text" name="attributes_keys[]"  class="form-input" placeholder="amount_eur">
+                <input type="text" name="attributes_values[]" class="form-input" placeholder="199.99">
+                <button type="button" class="btn-icon" data-remove>×</button>
+            </div>
+            <div class="kv-row">
+                <input type="text" name="attributes_keys[]"  class="form-input" placeholder="verified">
+                <input type="text" name="attributes_values[]" class="form-input" placeholder="true">
+                <button type="button" class="btn-icon" data-remove>×</button>
+            </div>
+        </div>
+        <button type="button" class="btn-add" data-add="attributes-rows">+ add attribute</button>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Send</button>
+            <a href="/" class="btn btn-default">Cancel</a>
+        </div>
+    </form>
+</div>

@@ -1,0 +1,51 @@
+<?php
+/**
+ * Bottom-of-page console panel — mirrors the collapsible console in
+ * com.logdb.web.ui. Renders the most recent send results from `HistoryStore`
+ * in monospace, color-coded by status.
+ *
+ * @var \Sample\HistoryStore|null $history
+ * @var \Sample\View              $view
+ */
+
+if ($history === null) {
+    return;
+}
+$lines = $history->recent(15);
+?>
+<section class="console-panel" data-collapsed="false">
+    <header class="console-header">
+        <span class="console-title">console</span>
+        <span class="console-counter"><?= count($lines) ?> recent</span>
+        <button type="button" class="console-toggle" data-console-toggle>collapse</button>
+    </header>
+    <div class="console-content">
+        <?php if ($lines === []): ?>
+            <div class="console-line console-line-empty">no sends yet — try “Send a log” in the sidebar</div>
+        <?php else: ?>
+            <?php foreach ($lines as $line): ?>
+                <?php
+                $statusClass = match ($line['status']) {
+                    'Success' => 'ok',
+                    'NotAuthorized' => 'auth',
+                    'CircuitOpen' => 'circuit',
+                    'Timeout' => 'timeout',
+                    default => 'fail',
+                };
+                $time = date('H:i:s', (int) ($line['ts'] / 1000));
+                ?>
+                <div class="console-line">
+                    <span class="console-time"><?= $view->e($time) ?></span>
+                    <span class="console-type"><?= $view->e($line['type']) ?></span>
+                    <span class="console-status console-status-<?= $statusClass ?>">
+                        <?= $view->e($line['status']) ?>
+                    </span>
+                    <span class="console-summary"><?= $view->e($line['summary']) ?></span>
+                    <?php if ($line['error'] !== null): ?>
+                        <span class="console-error"><?= $view->e($line['error']) ?></span>
+                    <?php endif; ?>
+                </div>
+            <?php endforeach; ?>
+        <?php endif; ?>
+    </div>
+</section>

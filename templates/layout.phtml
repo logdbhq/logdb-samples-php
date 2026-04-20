@@ -1,0 +1,41 @@
+<?php
+/**
+ * @var string                  $title
+ * @var string                  $active
+ * @var array|null              $flash    [type=>'success'|'error'|'info', message=>string]
+ * @var string                  $content
+ * @var \Sample\HistoryStore    $history
+ * @var \Sample\View            $view
+ */
+?>
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title><?= $view->e($title) ?></title>
+    <link rel="stylesheet" href="/assets/style.css">
+    <link rel="icon" href="/assets/logo.svg">
+</head>
+<body>
+<div class="main-layout">
+
+    <?= $view->partial('partials/sidebar.phtml', ['active' => $active]) ?>
+
+    <main class="content-area">
+        <?php if ($flash !== null): ?>
+            <div class="flash flash-<?= $view->e($flash['type'] ?? 'info') ?>">
+                <?= $view->e($flash['message'] ?? '') ?>
+            </div>
+        <?php endif; ?>
+
+        <?= $content ?>
+
+        <?= $view->partial('partials/console.phtml', ['history' => $history]) ?>
+    </main>
+
+</div>
+
+<script src="/assets/app.js" defer></script>
+</body>
+</html>

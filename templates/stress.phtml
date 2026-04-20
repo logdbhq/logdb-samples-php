@@ -1,0 +1,111 @@
+<?php
+/**
+ * @var array|null $result
+ * @var \Sample\View $view
+ */
+?>
+<div class="page-header">
+    <h1>Stress test</h1>
+    <div class="subtitle">
+        Burst-write N entries through <code>LogEventBuilder</code> to surface
+        elapsed time, throughput, and the per-status breakdown. Useful for
+        sanity-checking batching + retry behavior end-to-end.
+    </div>
+</div>
+
+<div class="page-body">
+
+    <?php if ($result !== null): ?>
+        <section class="dashboard-section">
+            <h2>Last run</h2>
+            <div class="card-grid">
+                <div class="stats-card">
+                    <div class="stat-icon">
+                        <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22">
+                            <path d="M13 2L3 14h7l-1 8 11-12h-7l1-8z"/>
+                        </svg>
+                    </div>
+                    <div class="stat-content">
+                        <h3>Entries</h3>
+                        <span class="stat-number"><?= (int) $result['count'] ?></span>
+                    </div>
+                </div>
+                <div class="stats-card">
+                    <div class="stat-icon">
+                        <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22">
+                            <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm.5 5h-1v6l5 3 .5-1L13 12V7z"/>
+                        </svg>
+                    </div>
+                    <div class="stat-content">
+                        <h3>Elapsed</h3>
+                        <span class="stat-number"><?= number_format($result['elapsedMs'], 0) ?> <span class="muted" style="font-size:13px">ms</span></span>
+                    </div>
+                </div>
+                <div class="stats-card">
+                    <div class="stat-icon success">
+                        <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22">
+                            <path d="M3 13h2l3 6 4-12 3 9h6v-2h-4l-5-12-4 11-2-4H3v4z"/>
+                        </svg>
+                    </div>
+                    <div class="stat-content">
+                        <h3>Throughput</h3>
+                        <span class="stat-number"><?= number_format($result['perSec'], 0) ?> <span class="muted" style="font-size:13px">/sec</span></span>
+                    </div>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 16px; font-size: 13px; color: var(--text-secondary)">Status breakdown</h3>
+            <table class="table" style="max-width: 480px">
+                <thead><tr><th>Status</th><th>Count</th></tr></thead>
+                <tbody>
+                <?php foreach ($result['statuses'] as $name => $n): ?>
+                    <?php if ($n === 0) continue; ?>
+                    <?php
+                    $badge = $name === 'Success' ? 'success'
+                        : ($name === 'NotAuthorized' ? 'error' : ($name === 'Failed' ? 'error' : 'warning'));
+                    ?>
+                    <tr>
+                        <td><span class="level-badge <?= $badge ?>"><?= $view->e($name) ?></span></td>
+                        <td class="col-mono"><?= $n ?></td>
+                    </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+            <p class="muted" style="font-size: 12px; margin-top: 12px">
+                Probe tag: <code><?= $view->e($result['tag']) ?></code> — search for it in LogDB to find this run.
+            </p>
+        </section>
+    <?php endif; ?>
+
+    <form method="post" action="/stress" class="dashboard-section">
+        <h2>Run a new burst</h2>
+        <div class="form-grid">
+            <div class="form-field">
+                <label for="count">Number of entries</label>
+                <input type="number" id="count" name="count" class="form-input"
+                       value="100" min="1" max="5000">
+                <span class="hint">Capped at 5,000 for sample sanity.</span>
+            </div>
+            <div class="form-field">
+                <label for="batch_size">Flush every N entries</label>
+                <input type="number" id="batch_size" name="batch_size" class="form-input"
+                       value="50" min="1" max="500">
+                <span class="hint">Smaller = more flushes, more accurate per-batch timing.</span>
+            </div>
+            <div class="form-field" style="grid-column: 1 / -1">
+                <label for="level_mix">Level distribution</label>
+                <select id="level_mix" name="level_mix" class="form-select">
+                    <option value="mostly-info">Mostly Info (70/20/10 Info/Warn/Error)</option>
+                    <option value="mostly-error">Mostly Error (70/20/10 Error/Warn/Info)</option>
+                    <option value="all-info">All Info</option>
+                    <option value="all-error">All Error</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Run stress test</button>
+            <a href="/" class="btn btn-default">Cancel</a>
+        </div>
+    </form>
+</div>

@@ -1,0 +1,56 @@
+<?php
+/** @var \Sample\View $view */
+?>
+<div class="page-header">
+    <h1>Send a heartbeat</h1>
+    <div class="subtitle">
+        Builds a <code>LogBeat</code> via <code>LogBeatBuilder</code>. Tags are indexed
+        (low cardinality); fields are values (high cardinality OK). Numeric field
+        values stay numeric on the wire — string fields are sent as strings.
+    </div>
+</div>
+
+<div class="page-body">
+    <form method="post" action="/beat" class="dashboard-section">
+        <h2>Required</h2>
+        <div class="form-grid single">
+            <div class="form-field">
+                <label for="measurement">Measurement</label>
+                <input type="text" id="measurement" name="measurement" class="form-input"
+                       placeholder="queue.depth" required>
+                <span class="hint">Free-form name like <code>cpu</code>, <code>queue.depth</code>, <code>page.load</code>.</span>
+            </div>
+        </div>
+
+        <h2 style="margin-top: 24px">Tags</h2>
+        <p class="muted" style="margin-top:0; font-size:12px">Indexed for filtering. Keep cardinality low — host name yes, request ID no.</p>
+        <div class="kv-rows" id="tags-rows">
+            <div class="kv-row">
+                <input type="text" name="tag_keys[]"   class="form-input" placeholder="queue">
+                <input type="text" name="tag_values[]" class="form-input" placeholder="orders.confirmed">
+                <button type="button" class="btn-icon" data-remove>×</button>
+            </div>
+            <div class="kv-row">
+                <input type="text" name="tag_keys[]"   class="form-input" placeholder="region">
+                <input type="text" name="tag_values[]" class="form-input" placeholder="eu-west-1">
+                <button type="button" class="btn-icon" data-remove>×</button>
+            </div>
+        </div>
+        <button type="button" class="btn-add" data-add="tags-rows">+ add tag</button>
+
+        <h2 style="margin-top: 24px">Fields</h2>
+        <div class="kv-rows" id="fields-rows">
+            <div class="kv-row">
+                <input type="text" name="field_keys[]"   class="form-input" placeholder="depth">
+                <input type="text" name="field_values[]" class="form-input" placeholder="1247">
+                <button type="button" class="btn-icon" data-remove>×</button>
+            </div>
+        </div>
+        <button type="button" class="btn-add" data-add="fields-rows">+ add field</button>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Send heartbeat</button>
+            <a href="/" class="btn btn-default">Cancel</a>
+        </div>
+    </form>
+</div>

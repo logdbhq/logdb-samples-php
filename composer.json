@@ -1,0 +1,23 @@
+{
+    "name": "logdbhq/logdb-samples-php",
+    "description": "Web sample app demonstrating logdbhq/logdb-php. Inspired by the LogDB TUI feature surface, styled to match the Angular web UI.",
+    "type": "project",
+    "license": "MIT",
+    "require": {
+        "php": "^8.1",
+        "ext-curl": "*",
+        "ext-json": "*",
+        "logdbhq/logdb-php": "^0.1@alpha"
+    },
+    "autoload": {
+        "psr-4": {
+            "Sample\\": "src/"
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {}
+    },
+    "minimum-stability": "alpha",
+    "prefer-stable": true
+}

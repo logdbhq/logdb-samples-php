@@ -1,0 +1,55 @@
+<?php
+/** @var \Sample\View $view */
+?>
+<div class="page-header">
+    <h1>Write to cache</h1>
+    <div class="subtitle">
+        Builds a <code>LogCache</code> via <code>LogCacheBuilder</code>. Strings or
+        arrays/objects (auto-JSON-encoded). Routed via the OTLP logs pipeline server-side.
+    </div>
+</div>
+
+<div class="page-body">
+    <form method="post" action="/cache" class="dashboard-section">
+        <div class="form-grid single">
+            <div class="form-field">
+                <label for="key">Key</label>
+                <input type="text" id="key" name="key" class="form-input"
+                       placeholder="user:42:profile" required>
+            </div>
+
+            <div class="form-field">
+                <label for="value">Value</label>
+                <textarea id="value" name="value" class="form-textarea"
+                          placeholder='Alice'>Alice</textarea>
+                <span class="hint">
+                    Plain text by default. Tick the box below to send as JSON
+                    (the SDK will pass the decoded array to <code>setValue()</code>,
+                    which JSON-encodes it back on the wire).
+                </span>
+            </div>
+
+            <div class="form-field">
+                <label>
+                    <input type="checkbox" name="value_is_json" value="1">
+                    Value is JSON
+                </label>
+            </div>
+
+            <div class="form-field">
+                <label for="ttl_seconds">TTL (seconds, optional)</label>
+                <input type="number" id="ttl_seconds" name="ttl_seconds" class="form-input"
+                       placeholder="3600" min="1">
+                <span class="hint">
+                    Reserved for future server-side TTL — currently stored
+                    client-side but not enforced.
+                </span>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Cache it</button>
+            <a href="/" class="btn btn-default">Cancel</a>
+        </div>
+    </form>
+</div>

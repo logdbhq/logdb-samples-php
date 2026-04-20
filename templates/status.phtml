@@ -1,0 +1,75 @@
+<?php
+/**
+ * @var string $endpoint
+ * @var string $application
+ * @var string $environment
+ * @var int    $totalCount
+ * @var int    $successCount
+ * @var int    $failureCount
+ * @var array  $recentErrors
+ * @var string $phpVersion
+ * @var string $sdkVersion
+ * @var \Sample\View $view
+ */
+?>
+<div class="page-header">
+    <h1>Status</h1>
+    <div class="subtitle">
+        Configuration the sample is running with, plus any SDK errors captured
+        in the current process via <code>LogDBClientOptions-&gt;onError</code>.
+    </div>
+</div>
+
+<div class="page-body">
+
+    <section class="dashboard-section">
+        <h2>Configuration</h2>
+        <dl class="kv-list">
+            <dt>Endpoint</dt>           <dd><?= $view->e($endpoint) ?></dd>
+            <dt>Application</dt>        <dd><?= $view->e($application) ?></dd>
+            <dt>Environment</dt>        <dd><?= $view->e($environment) ?></dd>
+            <dt>SDK version</dt>        <dd><?= $view->e($sdkVersion) ?></dd>
+            <dt>PHP version</dt>        <dd><?= $view->e($phpVersion) ?></dd>
+            <dt>ext-curl</dt>           <dd><?= extension_loaded('curl') ? 'loaded' : 'MISSING' ?></dd>
+            <dt>ext-json</dt>           <dd><?= extension_loaded('json') ? 'loaded' : 'MISSING' ?></dd>
+        </dl>
+    </section>
+
+    <section class="dashboard-section">
+        <h2>Counters (this process)</h2>
+        <dl class="kv-list">
+            <dt>Total sends</dt>  <dd><?= $totalCount ?></dd>
+            <dt>Succeeded</dt>    <dd><?= $successCount ?></dd>
+            <dt>Failed</dt>       <dd><?= $failureCount ?></dd>
+        </dl>
+    </section>
+
+    <section class="dashboard-section">
+        <h2>Recent SDK errors</h2>
+        <?php if ($recentErrors === []): ?>
+            <p class="muted">None — every send so far has returned <code>Success</code>.</p>
+        <?php else: ?>
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Type</th>
+                    <th>Class / status</th>
+                    <th>Message</th>
+                </tr>
+                </thead>
+                <tbody>
+                <?php foreach ($recentErrors as $err): ?>
+                    <tr>
+                        <td class="col-mono"><?= $view->e(date('H:i:s', (int) ($err['ts'] / 1000))) ?></td>
+                        <td><?= $view->e($err['type']) ?></td>
+                        <td><span class="level-badge error"><?= $view->e($err['summary']) ?></span></td>
+                        <td class="col-mono"><?= $view->e($err['error']) ?></td>
+                    </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+        <?php endif; ?>
+    </section>
+
+</div>

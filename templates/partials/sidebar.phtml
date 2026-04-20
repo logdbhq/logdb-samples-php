@@ -1,0 +1,54 @@
+<?php
+/**
+ * @var string $active   one of: dashboard, log, beat, cache, stress, status
+ */
+?>
+<nav class="logdb-sidebar" aria-label="Primary">
+    <a href="/" class="sidebar-logo" title="LogDB PHP Sample">
+        <img src="/assets/logo.svg" alt="LogDB">
+    </a>
+
+    <a href="/" class="sidebar-btn <?= $active === 'dashboard' ? 'active' : '' ?>" title="Dashboard">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+            <path d="M3 3h8v8H3V3zm0 10h8v8H3v-8zm10 0h8v8h-8v-8zm0-10h8v8h-8V3z"/>
+        </svg>
+    </a>
+
+    <a href="/log" class="sidebar-btn <?= $active === 'log' ? 'active' : '' ?>" title="Send a log">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+            <path d="M4 4h16v2H4V4zm0 5h16v2H4V9zm0 5h10v2H4v-2zm0 5h7v2H4v-2z"/>
+        </svg>
+    </a>
+
+    <a href="/beat" class="sidebar-btn <?= $active === 'beat' ? 'active' : '' ?>" title="Send a heartbeat">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+            <path d="M3 12h3l2-5 4 10 2-5h7v2h-5l-3 8-4-10-1 2H3v-2z"/>
+        </svg>
+    </a>
+
+    <a href="/cache" class="sidebar-btn <?= $active === 'cache' ? 'active' : '' ?>" title="Write to cache">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+            <path d="M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v9h16v-9a2 2 0 0 0-2-2h-1V7a5 5 0 0 0-5-5zm-3 8V7a3 3 0 1 1 6 0v3H9z"/>
+        </svg>
+    </a>
+
+    <a href="/stress" class="sidebar-btn <?= $active === 'stress' ? 'active' : '' ?>" title="Stress test">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+            <path d="M13 2L3 14h7l-1 8 11-12h-7l1-8z"/>
+        </svg>
+    </a>
+
+    <div class="sidebar-spacer"></div>
+
+    <a href="/status" class="sidebar-btn <?= $active === 'status' ? 'active' : '' ?>" title="Client status">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+            <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3zm-1 5h2v6h-2v-6z"/>
+        </svg>
+    </a>
+
+    <button type="button" class="sidebar-btn theme-toggle-btn" title="Toggle theme" data-theme-toggle>
+        <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+            <path d="M21 13a9 9 0 0 1-12-12 9 9 0 1 0 12 12z"/>
+        </svg>
+    </button>
+</nav>
