@@ -19,6 +19,9 @@ require $root . '/vendor/autoload.php';
 use Sample\ClientFactory;
 use Sample\Controllers\AuthController;
 use Sample\Controllers\BeatController;
+use Sample\Controllers\BrowseBeatsController;
+use Sample\Controllers\BrowseCacheController;
+use Sample\Controllers\BrowseLogsController;
 use Sample\Controllers\CacheController;
 use Sample\Controllers\DashboardController;
 use Sample\Controllers\LogController;
@@ -123,6 +126,10 @@ $response = match (true) {
     $path === '/stress' && $method === 'POST' => (new StressController($client, $history, $view))->submit($_POST),
 
     $path === '/status' => (new StatusController($client, $history, $view))->index(),
+
+    $path === '/browse/logs'  => (new BrowseLogsController($history, $view))->index($_GET, $flash),
+    $path === '/browse/cache' => (new BrowseCacheController($history, $view))->index($_GET, $flash),
+    $path === '/browse/beats' => (new BrowseBeatsController($history, $view))->index($_GET, $flash),
 
     default => (function () use ($view, $history) {
         http_response_code(404);

@@ -7,7 +7,7 @@
         "php": "^8.1",
         "ext-curl": "*",
         "ext-json": "*",
-        "logdbhq/logdb-php": "^0.1@alpha"
+        "logdbhq/logdb-php": "^0.2@alpha"
     },
     "autoload": {
         "psr-4": {

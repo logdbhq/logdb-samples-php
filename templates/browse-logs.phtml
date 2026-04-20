@@ -1,0 +1,171 @@
+<?php
+/**
+ * @var \LogDB\Models\Reader\LogPage|null $page
+ * @var list<string>           $collections
+ * @var int                    $currentPage
+ * @var int                    $pageSize
+ * @var int                    $totalPages
+ * @var array<string, string>  $filters
+ * @var string                 $readerEndpoint
+ * @var string|null            $error
+ * @var \Sample\View           $view
+ */
+?>
+<div class="page-header">
+    <h1>Browse logs</h1>
+    <div class="subtitle">
+        Pulls log entries from <code><?= $view->e($readerEndpoint) ?></code>
+        via <code>LogDBReader::getLogs()</code>. Same data your Angular UI /
+        VS Code extension / TUI see — just rendered with PHP.
+    </div>
+</div>
+
+<div class="page-body">
+
+    <?php if ($error !== null): ?>
+        <div class="dashboard-section">
+            <h2 style="color: var(--error-color)">Reader error</h2>
+            <p class="muted"><?= $view->e($error) ?></p>
+            <p class="muted">If this is "401" check your API key on <a href="/auth">/auth</a>. If it's a connection error confirm <code>LOGDB_READER_ENDPOINT</code> in <code>.env</code>.</p>
+        </div>
+    <?php endif; ?>
+
+    <form method="get" action="/browse/logs" class="dashboard-section">
+        <h2>Filters</h2>
+        <div class="form-grid">
+            <div class="form-field">
+                <label for="application">Application</label>
+                <input type="text" id="application" name="application" class="form-input"
+                       value="<?= $view->e($filters['application']) ?>"
+                       placeholder="logdb-php-sample">
+            </div>
+            <div class="form-field">
+                <label for="environment">Environment</label>
+                <input type="text" id="environment" name="environment" class="form-input"
+                       value="<?= $view->e($filters['environment']) ?>"
+                       placeholder="production">
+            </div>
+            <div class="form-field">
+                <label for="level">Level</label>
+                <select id="level" name="level" class="form-select">
+                    <option value="">— any —</option>
+                    <?php foreach (['Trace', 'Debug', 'Info', 'Warning', 'Error', 'Critical', 'Exception'] as $lv): ?>
+                        <option value="<?= $lv ?>" <?= $filters['level'] === $lv ? 'selected' : '' ?>>
+                            <?= $lv ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="form-field">
+                <label for="collection">Collection</label>
+                <select id="collection" name="collection" class="form-select">
+                    <option value="">— any —</option>
+                    <?php foreach ($collections as $coll): ?>
+                        <option value="<?= $view->e($coll) ?>" <?= $filters['collection'] === $coll ? 'selected' : '' ?>>
+                            <?= $view->e($coll) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="form-field" style="grid-column: 1 / -1">
+                <label for="search">Message contains</label>
+                <input type="text" id="search" name="search" class="form-input"
+                       value="<?= $view->e($filters['search']) ?>"
+                       placeholder="payment failed">
+            </div>
+            <div class="form-field">
+                <label for="from">From (UTC)</label>
+                <input type="datetime-local" id="from" name="from" class="form-input"
+                       value="<?= $view->e($filters['from']) ?>">
+            </div>
+            <div class="form-field">
+                <label for="to">To (UTC)</label>
+                <input type="datetime-local" id="to" name="to" class="form-input"
+                       value="<?= $view->e($filters['to']) ?>">
+            </div>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Apply filters</button>
+            <a href="/browse/logs" class="btn btn-default">Reset</a>
+        </div>
+    </form>
+
+    <?php if ($page !== null): ?>
+        <section class="dashboard-section">
+            <h2>
+                <?= number_format($page->totalCount) ?> logs
+                <span class="muted" style="font-weight: normal; font-size: 13px">
+                    — page <?= $currentPage ?> of <?= $totalPages ?>
+                </span>
+            </h2>
+
+            <?php if ($page->items === []): ?>
+                <p class="muted">No matches for the current filters.</p>
+            <?php else: ?>
+                <div class="overflow-x-auto">
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th style="width: 150px">Time</th>
+                            <th style="width: 80px">Level</th>
+                            <th style="width: 160px">Application</th>
+                            <th style="width: 120px">Correlation</th>
+                            <th>Message</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <?php foreach ($page->items as $log): ?>
+                            <?php
+                            $levelClass = match ($log->level->toString()) {
+                                'Error', 'Exception' => 'error',
+                                'Critical' => 'critical',
+                                'Warning' => 'warning',
+                                'Info' => 'info',
+                                'Debug', 'Trace' => 'debug',
+                                default => 'muted',
+                            };
+                            $messagePreview = strlen($log->message) > 120
+                                ? substr($log->message, 0, 119) . '…'
+                                : $log->message;
+                            ?>
+                            <tr>
+                                <td class="col-mono"><?= $view->e($log->timestamp->format('Y-m-d H:i:s')) ?></td>
+                                <td><span class="level-badge <?= $levelClass ?>"><?= $view->e($log->level->toString()) ?></span></td>
+                                <td><?= $view->e($log->application) ?></td>
+                                <td class="col-mono"><?= $view->e(substr($log->correlationId, 0, 8) ?: '—') ?></td>
+                                <td>
+                                    <?= $view->e($messagePreview) ?>
+                                    <?php if ($log->exception !== ''): ?>
+                                        <span class="muted" style="font-size: 11px"> — <?= $view->e(substr($log->exception, 0, 60)) ?></span>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+
+                <?php if ($totalPages > 1): ?>
+                    <div class="form-actions" style="margin-top: 16px; justify-content: center">
+                        <?php
+                        $qs = http_build_query(array_filter($filters, static fn ($v) => $v !== ''));
+                        $base = '/browse/logs' . ($qs !== '' ? "?{$qs}&" : '?');
+                        ?>
+                        <?php if ($currentPage > 1): ?>
+                            <a class="btn btn-default" href="<?= $view->e($base) ?>page=<?= $currentPage - 1 ?>">← Previous</a>
+                        <?php else: ?>
+                            <span class="btn btn-default" style="opacity: 0.4; cursor: default">← Previous</span>
+                        <?php endif; ?>
+                        <span class="muted" style="padding: 0 12px">page <?= $currentPage ?> / <?= $totalPages ?></span>
+                        <?php if ($currentPage < $totalPages): ?>
+                            <a class="btn btn-default" href="<?= $view->e($base) ?>page=<?= $currentPage + 1 ?>">Next →</a>
+                        <?php else: ?>
+                            <span class="btn btn-default" style="opacity: 0.4; cursor: default">Next →</span>
+                        <?php endif; ?>
+                    </div>
+                <?php endif; ?>
+            <?php endif; ?>
+        </section>
+    <?php endif; ?>
+
+</div>

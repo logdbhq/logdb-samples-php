@@ -1,0 +1,124 @@
+<?php
+/**
+ * @var \LogDB\Models\Reader\LogPage|null $page
+ * @var int                    $currentPage
+ * @var int                    $totalPages
+ * @var array<string, string>  $filters
+ * @var string                 $readerEndpoint
+ * @var string|null            $error
+ * @var \Sample\View           $view
+ */
+?>
+<div class="page-header">
+    <h1>Browse heartbeats</h1>
+    <div class="subtitle">
+        Heartbeat / measurement entries from <code><?= $view->e($readerEndpoint) ?></code>
+        via <code>LogDBReader::getLogBeats()</code>.
+    </div>
+</div>
+
+<div class="page-body">
+
+    <?php if ($error !== null): ?>
+        <div class="dashboard-section">
+            <h2 style="color: var(--error-color)">Reader error</h2>
+            <p class="muted"><?= $view->e($error) ?></p>
+        </div>
+    <?php endif; ?>
+
+    <form method="get" action="/browse/beats" class="dashboard-section">
+        <h2>Filters</h2>
+        <div class="form-grid">
+            <div class="form-field">
+                <label for="measurement">Measurement</label>
+                <input type="text" id="measurement" name="measurement" class="form-input"
+                       value="<?= $view->e($filters['measurement']) ?>"
+                       placeholder="queue.depth">
+            </div>
+            <div class="form-field">
+                <label for="collection">Collection</label>
+                <input type="text" id="collection" name="collection" class="form-input"
+                       value="<?= $view->e($filters['collection']) ?>">
+            </div>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Apply filters</button>
+            <a href="/browse/beats" class="btn btn-default">Reset</a>
+        </div>
+    </form>
+
+    <?php if ($page !== null): ?>
+        <section class="dashboard-section">
+            <h2>
+                <?= number_format($page->totalCount) ?> heartbeats
+                <span class="muted" style="font-weight: normal; font-size: 13px">
+                    — page <?= $currentPage ?> of <?= $totalPages ?>
+                </span>
+            </h2>
+
+            <?php if ($page->items === []): ?>
+                <p class="muted">No heartbeats match the current filters.</p>
+            <?php else: ?>
+                <table class="table">
+                    <thead>
+                    <tr>
+                        <th style="width: 150px">Time</th>
+                        <th style="width: 200px">Measurement</th>
+                        <th style="width: 100px">Collection</th>
+                        <th>Tags</th>
+                        <th>Fields</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <?php foreach ($page->items as $beat): ?>
+                        <tr>
+                            <td class="col-mono"><?= $view->e($beat->timestamp->format('Y-m-d H:i:s')) ?></td>
+                            <td class="col-mono"><?= $view->e($beat->measurement) ?></td>
+                            <td><?= $view->e($beat->collection) ?: '—' ?></td>
+                            <td class="col-mono">
+                                <?php if ($beat->tags === []): ?>
+                                    <span class="muted">—</span>
+                                <?php else: ?>
+                                    <?php foreach ($beat->tags as $k => $v): ?>
+                                        <span class="level-badge muted" style="margin-right: 4px">
+                                            <?= $view->e("{$k}={$v}") ?>
+                                        </span>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </td>
+                            <td class="col-mono">
+                                <?php if ($beat->fields === []): ?>
+                                    <span class="muted">—</span>
+                                <?php else: ?>
+                                    <?php foreach ($beat->fields as $k => $v): ?>
+                                        <span class="level-badge info" style="margin-right: 4px">
+                                            <?= $view->e("{$k}={$v}") ?>
+                                        </span>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+
+                <?php if ($totalPages > 1): ?>
+                    <div class="form-actions" style="margin-top: 16px; justify-content: center">
+                        <?php
+                        $qs = http_build_query(array_filter($filters, static fn ($v) => $v !== ''));
+                        $base = '/browse/beats' . ($qs !== '' ? "?{$qs}&" : '?');
+                        ?>
+                        <?php if ($currentPage > 1): ?>
+                            <a class="btn btn-default" href="<?= $view->e($base) ?>page=<?= $currentPage - 1 ?>">← Previous</a>
+                        <?php endif; ?>
+                        <span class="muted" style="padding: 0 12px">page <?= $currentPage ?> / <?= $totalPages ?></span>
+                        <?php if ($currentPage < $totalPages): ?>
+                            <a class="btn btn-default" href="<?= $view->e($base) ?>page=<?= $currentPage + 1 ?>">Next →</a>
+                        <?php endif; ?>
+                    </div>
+                <?php endif; ?>
+            <?php endif; ?>
+        </section>
+    <?php endif; ?>
+
+</div>

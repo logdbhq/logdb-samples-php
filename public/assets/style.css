@@ -111,6 +111,13 @@ a:hover { color: var(--accent-hover); }
 
 .sidebar-spacer { flex: 1; }
 
+.sidebar-divider {
+    width: 32px;
+    height: 1px;
+    background: var(--border-color);
+    margin: 6px 0;
+}
+
 /* Auth icon — small status dot in the top-right corner. */
 .sidebar-btn-auth-session,
 .sidebar-btn-auth-\.env,
