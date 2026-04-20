@@ -66,6 +66,8 @@ final class CacheController
         $status = $builder->log();
         $this->client->flush();
 
+        error_log("[sample] /cache POST -> status={$status->value} key=\"{$key}\" json=" . ($valueIsJson ? 'yes' : 'no'));
+
         $this->history->record(
             type: HistoryStore::TYPE_CACHE,
             status: $status->value,

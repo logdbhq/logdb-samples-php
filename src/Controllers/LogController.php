@@ -80,6 +80,8 @@ final class LogController
         // can record a definitive Success/Failed status in the history.
         $this->client->flush();
 
+        error_log("[sample] /log POST -> status={$status->value} level={$level->toString()} msg=\"{$message}\"");
+
         $this->history->record(
             type: HistoryStore::TYPE_LOG,
             status: $status->value,

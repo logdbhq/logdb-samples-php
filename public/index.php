@@ -43,31 +43,45 @@ if ($path !== '/' && is_file(__DIR__ . $path)) {
 
 session_start();
 
-// Per-process singletons — safe under `php -S`. Each PHP-FPM worker would
-// rebuild these on first request, which is also what we want.
-static $history = null;
-static $view = null;
+// HistoryStore is per-session: each browser cookie has its own ring buffer.
+// PHP scripts run fresh per request, so we have to (de)serialize through
+// $_SESSION — without this, every request would start with an empty store
+// and the console panel would never display anything you just sent.
+$history = ($_SESSION['history'] ?? null) instanceof HistoryStore
+    ? $_SESSION['history']
+    : new HistoryStore();
 
-if ($history === null) {
-    $history = new HistoryStore();
-    $view = new View($root . '/templates');
-}
+$view = new View($root . '/templates');
 
 $flash = $_SESSION['flash'] ?? null;
 unset($_SESSION['flash']);
 
+// Helper to flush mutated state back to the session. Called before every
+// echo / header()-only return path so PHP's session save handler (which runs
+// at script shutdown) sees the latest history. Must NOT use a shutdown
+// callback — those run AFTER the session writer in many PHP configurations.
+$saveSession = static function () use (&$history): void {
+    $_SESSION['history'] = $history;
+};
+
 // /auth and /auth/signout run BEFORE we try to construct the client — they
 // don't need one (signing in is what gives us a key in the first place).
 if ($path === '/auth' && $method === 'GET') {
-    echo (new AuthController($history, $view))->form($flash);
+    $body = (new AuthController($history, $view))->form($flash);
+    $saveSession();
+    echo $body;
     return;
 }
 if ($path === '/auth' && $method === 'POST') {
-    echo (new AuthController($history, $view))->submit($_POST);
+    $body = (new AuthController($history, $view))->submit($_POST);
+    $saveSession();
+    echo $body;
     return;
 }
 if ($path === '/auth/signout' && $method === 'POST') {
-    echo (new AuthController($history, $view))->signOut();
+    $body = (new AuthController($history, $view))->signOut();
+    $saveSession();
+    echo $body;
     return;
 }
 
@@ -77,16 +91,19 @@ try {
     // No key in session, no key in .env — send the user to the sign-in form
     // instead of erroring with a 500.
     $_SESSION['flash'] = ['type' => 'info', 'message' => 'Sign in with a LogDB API key to start sending.'];
+    $saveSession();
     header('Location: /auth');
     return;
 } catch (\Throwable $e) {
     http_response_code(500);
-    echo $view->render('error', [
+    $body = $view->render('error', [
         'title' => 'Configuration error',
         'active' => '',
         'history' => $history,
         'message' => $e->getMessage(),
     ]);
+    $saveSession();
+    echo $body;
     return;
 }
 
@@ -118,4 +135,5 @@ $response = match (true) {
     })(),
 };
 
+$saveSession();
 echo $response;

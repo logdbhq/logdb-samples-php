@@ -71,6 +71,16 @@ final class StressController
         $elapsed = microtime(true) - $startedAt;
         $perSec = $elapsed > 0 ? $count / $elapsed : 0;
 
+        error_log(sprintf(
+            '[sample] /stress POST -> count=%d allOk=%s elapsed=%dms perSec=%d statuses=%s tag=%s',
+            $count,
+            $allOk ? 'yes' : 'no',
+            (int) ($elapsed * 1000),
+            (int) $perSec,
+            json_encode(array_filter($statuses, static fn (int $v): bool => $v > 0)),
+            $tag,
+        ));
+
         $this->history->record(
             type: HistoryStore::TYPE_STRESS,
             status: $allOk ? 'Success' : 'Failed',

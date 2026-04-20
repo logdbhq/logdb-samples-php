@@ -67,6 +67,8 @@ final class BeatController
         $status = $builder->log();
         $this->client->flush();
 
+        error_log("[sample] /beat POST -> status={$status->value} measurement=\"{$measurement}\" fields={$count}");
+
         $this->history->record(
             type: HistoryStore::TYPE_BEAT,
             status: $status->value,
